@@ -70,6 +70,10 @@ class MainActivity : ComponentActivity() {
         val mindfulViewModel = ViewModelProvider(this, factory)[MindfulViewModel::class.java]
         val settingsViewModel = ViewModelProvider(this, factory)[SettingsViewModel::class.java]
 
+        lifecycle.addObserver(
+            PermissionLifecycleObserver(onboardingViewModel, settingsViewModel)
+        )
+
         setContent {
             ScrollStopTheme {
                 MainScreen(
