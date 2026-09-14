@@ -1,5 +1,8 @@
 package com.aswinkumar.scrollstop.data.repository
 
+import com.aswinkumar.scrollstop.data.local.dao.AppUsageDao
+import com.aswinkumar.scrollstop.data.local.dao.InterventionSessionDao
+import com.aswinkumar.scrollstop.platform.UsageStatsDataSource
 import com.aswinkumar.scrollstop.domain.model.AppTrigger
 import com.aswinkumar.scrollstop.domain.model.InterventionStat
 import com.aswinkumar.scrollstop.domain.model.TimePeriod
@@ -7,68 +10,89 @@ import com.aswinkumar.scrollstop.domain.model.UsageMetric
 import com.aswinkumar.scrollstop.domain.repository.UsageRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import java.util.Calendar
 
-class UsageRepositoryImpl : UsageRepository {
+class UsageRepositoryImpl(
+    private val appUsageDao: AppUsageDao,
+    private val interventionSessionDao: InterventionSessionDao,
+    private val usageStatsDataSource: UsageStatsDataSource
+) : UsageRepository {
 
-    private val _todayMetric = MutableStateFlow(
-        UsageMetric(
-            timeSavedMinutes = 42,
-            interventionsCount = 14,
-            totalScreenTimeMinutes = 108,
-            todayFocusGoal = "Deep Reading & Mindfulness",
-            focusGoalProgress = 0.72f
-        )
-    )
-
-    private val _appTriggers = MutableStateFlow(
-        listOf(
-            AppTrigger("1", "Instagram", "com.instagram.android", 8, 45, true),
-            AppTrigger("2", "YouTube", "com.google.android.youtube", 4, 35, true),
-            AppTrigger("3", "TikTok", "com.zhiliaoapp.musically", 2, 18, true),
-            AppTrigger("4", "X / Twitter", "com.twitter.android", 0, 10, false)
-        )
-    )
-
-    override fun getTodayMetrics(): Flow<UsageMetric> = _todayMetric.asStateFlow()
+    override fun getTodayMetrics(): Flow<UsageMetric> = flow {
+        val today = usageStatsDataSource.refreshToday()
+        emitAll(appUsageDao.getTodayUsage(today).map { usage ->
+            val start = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            val interventions = interventionSessionDao.getSessionsInTimeRangeSync(
+                start,
+                System.currentTimeMillis()
+            )
+            UsageMetric(
+                timeSavedMinutes = interventions.sumOf {
+                    ((it.endTime - it.startTime) / 60_000L).toInt()
+                },
+                interventionsCount = interventions.size,
+                totalScreenTimeMinutes = (usage.sumOf { it.durationMillis } / 60_000L).toInt(),
+                todayFocusGoal = "Deep Reading & Mindfulness",
+                focusGoalProgress = 0f
+            )
+        })
+    }
 
     override fun getInterventionStats(period: TimePeriod): Flow<List<InterventionStat>> {
-        val stats = when (period) {
-            TimePeriod.DAY -> listOf(
-                InterventionStat("8 AM", 1, 5),
-                InterventionStat("11 AM", 3, 12),
-                InterventionStat("2 PM", 5, 15),
-                InterventionStat("5 PM", 3, 8),
-                InterventionStat("8 PM", 2, 2)
-            )
-            TimePeriod.WEEK -> listOf(
-                InterventionStat("Mon", 12, 35),
-                InterventionStat("Tue", 18, 50),
-                InterventionStat("Wed", 14, 42),
-                InterventionStat("Thu", 9, 28),
-                InterventionStat("Fri", 15, 45),
-                InterventionStat("Sat", 22, 65),
-                InterventionStat("Sun", 10, 30)
-            )
-            TimePeriod.MONTH -> listOf(
-                InterventionStat("Week 1", 85, 240),
-                InterventionStat("Week 2", 92, 280),
-                InterventionStat("Week 3", 78, 220),
-                InterventionStat("Week 4", 105, 310)
+        return flow {
+            val now = System.currentTimeMillis()
+            val duration = when (period) {
+                TimePeriod.DAY -> 24L * 60 * 60 * 1000
+                TimePeriod.WEEK -> 7L * 24 * 60 * 60 * 1000
+                TimePeriod.MONTH -> 30L * 24 * 60 * 60 * 1000
+            }
+            val sessions = interventionSessionDao.getSessionsInTimeRangeSync(now - duration, now)
+            emit(
+                sessions.groupBy { session ->
+                    Calendar.getInstance().apply { timeInMillis = session.startTime }
+                        .get(Calendar.DAY_OF_WEEK)
+                }.entries.sortedBy { it.key }.map { (day, items) ->
+                    InterventionStat(
+                        periodLabel = day.toString(),
+                        interventionCount = items.size,
+                        timeSavedMinutes = items.sumOf {
+                            ((it.endTime - it.startTime) / 60_000L).toInt()
+                        }
+                    )
+                }
             )
         }
-        return MutableStateFlow(stats).asStateFlow()
     }
 
-    override fun getTopTriggerApps(): Flow<List<AppTrigger>> = _appTriggers.asStateFlow()
-
-    override suspend fun toggleAppMonitoring(packageName: String, isMonitored: Boolean) {
-        _appTriggers.value = _appTriggers.value.map { item ->
-            if (item.packageName == packageName) {
-                item.copy(isMonitored = isMonitored)
-            } else {
-                item
+    override fun getTopTriggerApps(): Flow<List<AppTrigger>> =
+        appUsageDao.getTodayUsage(todayKey()).map { usage ->
+            usage.sortedByDescending { it.durationMillis }.take(10).map { item ->
+                AppTrigger(
+                    id = item.packageName,
+                    appName = item.appName,
+                    packageName = item.packageName,
+                    interventionsTriggered = 0,
+                    timeSpentMinutes = (item.durationMillis / 60_000L).toInt(),
+                    isMonitored = monitoredPackages.value[item.packageName] ?: false
+                )
             }
         }
+
+    override suspend fun toggleAppMonitoring(packageName: String, isMonitored: Boolean) {
+        monitoredPackages.value = monitoredPackages.value + (packageName to isMonitored)
     }
+
+    private val monitoredPackages = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+
+    private fun todayKey(): String =
+        java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+            .format(java.util.Date())
 }

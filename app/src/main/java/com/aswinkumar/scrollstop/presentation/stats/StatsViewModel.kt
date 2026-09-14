@@ -3,17 +3,19 @@ package com.aswinkumar.scrollstop.presentation.stats
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aswinkumar.scrollstop.domain.model.TimePeriod
-import com.aswinkumar.scrollstop.domain.repository.UsageRepository
 import com.aswinkumar.scrollstop.domain.usecase.GetStatisticsUseCase
+import com.aswinkumar.scrollstop.domain.usecase.ToggleAppMonitoringUseCase
+import com.aswinkumar.scrollstop.presentation.common.ScreenStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 class StatsViewModel(
     private val getStatisticsUseCase: GetStatisticsUseCase,
-    private val usageRepository: UsageRepository
+    private val toggleAppMonitoringUseCase: ToggleAppMonitoringUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StatsUiState())
@@ -27,13 +29,22 @@ class StatsViewModel(
     fun selectPeriod(period: TimePeriod) {
         viewModelScope.launch {
             _uiState.update { it.copy(selectedPeriod = period) }
-            getStatisticsUseCase.getStats(period).collect { stats ->
-                val totalSaved = stats.sumOf { it.timeSavedMinutes }
+            try {
+                getStatisticsUseCase.getStats(period).collect { stats ->
+                    val totalSaved = stats.sumOf { it.timeSavedMinutes }
+                    _uiState.update {
+                        it.copy(
+                            status = if (stats.isEmpty()) ScreenStatus.Empty else ScreenStatus.Success,
+                            errorMessage = null,
+                            interventionStats = stats,
+                            totalEstimatedTimeSavedMinutes = totalSaved
+                        )
+                    }
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
                 _uiState.update {
-                    it.copy(
-                        interventionStats = stats,
-                        totalEstimatedTimeSavedMinutes = totalSaved
-                    )
+                    it.copy(status = ScreenStatus.Error, errorMessage = error.message ?: "Unable to load statistics")
                 }
             }
         }
@@ -41,15 +52,22 @@ class StatsViewModel(
 
     private fun loadTopTriggers() {
         viewModelScope.launch {
-            getStatisticsUseCase.getTopTriggers().collect { apps ->
-                _uiState.update { it.copy(topTriggerApps = apps) }
+            try {
+                getStatisticsUseCase.getTopTriggers().collect { apps ->
+                    _uiState.update { it.copy(topTriggerApps = apps) }
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                _uiState.update {
+                    it.copy(status = ScreenStatus.Error, errorMessage = error.message ?: "Unable to load trigger apps")
+                }
             }
         }
     }
 
     fun toggleAppMonitoring(packageName: String, isMonitored: Boolean) {
         viewModelScope.launch {
-            usageRepository.toggleAppMonitoring(packageName, isMonitored)
+            toggleAppMonitoringUseCase(packageName, isMonitored)
         }
     }
 }

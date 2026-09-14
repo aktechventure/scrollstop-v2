@@ -3,6 +3,7 @@ package com.aswinkumar.scrollstop.presentation.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aswinkumar.scrollstop.domain.usecase.CheckPermissionsUseCase
+import com.aswinkumar.scrollstop.presentation.common.ScreenStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,12 +23,19 @@ class OnboardingViewModel(
 
     fun refreshPermissions() {
         viewModelScope.launch {
-            val permissions = checkPermissionsUseCase.checkNow()
-            _uiState.update {
-                it.copy(
-                    permissionState = permissions,
-                    isCompleted = permissions.isFullyGranted
-                )
+            try {
+                val permissions = checkPermissionsUseCase.checkNow()
+                _uiState.update {
+                    it.copy(
+                        status = if (permissions.isFullyGranted) ScreenStatus.Success else ScreenStatus.PermissionRequired,
+                        permissionState = permissions,
+                        isCompleted = permissions.isFullyGranted
+                    )
+                }
+            } catch (error: Exception) {
+                _uiState.update {
+                    it.copy(status = ScreenStatus.Error, errorMessage = error.message ?: "Unable to check permissions")
+                }
             }
         }
     }

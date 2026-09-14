@@ -22,7 +22,7 @@ import com.aswinkumar.scrollstop.data.local.entity.UserPreferenceEntity
         UserPreferenceEntity::class,
         InterventionSessionEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class ScrollStopDatabase : RoomDatabase() {

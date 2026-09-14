@@ -42,12 +42,29 @@ import com.aswinkumar.scrollstop.core.theme.SageGreenDark
 import com.aswinkumar.scrollstop.core.theme.SageGreenPrimary
 import com.aswinkumar.scrollstop.core.theme.ScrollStopTheme
 import com.aswinkumar.scrollstop.domain.model.UsageMetric
+import com.aswinkumar.scrollstop.presentation.common.ScreenStatus
 
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
     modifier: Modifier = Modifier
 ) {
+    if (uiState.usageMetric == null) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                text = when (uiState.status) {
+                    ScreenStatus.Loading -> "Loading today's usage..."
+                    ScreenStatus.PermissionRequired, ScreenStatus.PermissionDenied ->
+                        "Usage access is required to show today's usage."
+                    ScreenStatus.Error -> uiState.errorMessage ?: "Unable to load today's usage."
+                    else -> "No usage data recorded today."
+                },
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
+    val metric = uiState.usageMetric
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -68,7 +85,7 @@ fun HomeScreen(
 
         // Circular Time Saved Today Card
         TimeSavedCircularCard(
-            timeSavedMinutes = uiState.usageMetric.timeSavedMinutes,
+            timeSavedMinutes = metric.timeSavedMinutes,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -82,13 +99,13 @@ fun HomeScreen(
             MetricCard(
                 icon = Icons.Default.Shield,
                 label = "Interventions",
-                value = "${uiState.usageMetric.interventionsCount} paused",
+                value = "${metric.interventionsCount} paused",
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
                 icon = Icons.Default.Smartphone,
                 label = "Screen Time",
-                value = "${uiState.usageMetric.totalScreenTimeMinutes / 60}h ${uiState.usageMetric.totalScreenTimeMinutes % 60}m",
+                value = "${metric.totalScreenTimeMinutes / 60}h ${metric.totalScreenTimeMinutes % 60}m",
                 modifier = Modifier.weight(1f)
             )
         }
@@ -97,8 +114,8 @@ fun HomeScreen(
 
         // Today's Focus Card
         FocusGoalCard(
-            goal = uiState.usageMetric.todayFocusGoal,
-            progress = uiState.usageMetric.focusGoalProgress,
+            goal = metric.todayFocusGoal,
+            progress = metric.focusGoalProgress,
             modifier = Modifier.fillMaxWidth()
         )
 

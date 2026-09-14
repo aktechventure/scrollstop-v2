@@ -47,6 +47,7 @@ import com.aswinkumar.scrollstop.core.theme.ScrollStopTheme
 import com.aswinkumar.scrollstop.domain.model.AppTrigger
 import com.aswinkumar.scrollstop.domain.model.InterventionStat
 import com.aswinkumar.scrollstop.domain.model.TimePeriod
+import com.aswinkumar.scrollstop.presentation.common.ScreenStatus
 
 @Composable
 fun StatsScreen(
@@ -72,6 +73,20 @@ fun StatsScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (uiState.status == ScreenStatus.Loading || uiState.status == ScreenStatus.Error ||
+            uiState.status == ScreenStatus.PermissionRequired || uiState.status == ScreenStatus.PermissionDenied
+        ) {
+            Text(
+                text = when (uiState.status) {
+                    ScreenStatus.Loading -> "Loading statistics..."
+                    ScreenStatus.Error -> uiState.errorMessage ?: "Unable to load statistics."
+                    else -> "Usage access is required to show statistics."
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         // Time Period Segmented Buttons (Day / Week / Month)
         SingleChoiceSegmentedButtonRow(
