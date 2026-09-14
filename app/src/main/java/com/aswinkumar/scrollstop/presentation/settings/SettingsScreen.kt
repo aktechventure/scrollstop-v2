@@ -47,6 +47,7 @@ import com.aswinkumar.scrollstop.core.theme.SageGreenPrimary
 import com.aswinkumar.scrollstop.core.theme.ScrollStopTheme
 import com.aswinkumar.scrollstop.domain.model.AppSettings
 import com.aswinkumar.scrollstop.domain.model.PermissionState
+import com.aswinkumar.scrollstop.domain.model.PermissionStatus
 
 @Composable
 fun SettingsScreen(
@@ -90,19 +91,19 @@ fun SettingsScreen(
             Column(modifier = Modifier.padding(16.dp)) {
                 PermissionLinkItem(
                     title = "Usage Access",
-                    isGranted = uiState.permissionState.hasUsageAccess,
+                    status = uiState.permissionState.usageAccessStatus,
                     onClick = onRequestUsageAccess
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 PermissionLinkItem(
                     title = "Overlay Permission",
-                    isGranted = uiState.permissionState.hasOverlayPermission,
+                    status = uiState.permissionState.overlayPermissionStatus,
                     onClick = onRequestOverlayPermission
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 PermissionLinkItem(
                     title = "Accessibility Service",
-                    isGranted = uiState.permissionState.hasAccessibilityService,
+                    status = uiState.permissionState.accessibilityServiceStatus,
                     onClick = onRequestAccessibilityService
                 )
             }
@@ -324,9 +325,15 @@ private fun SettingsSectionTitle(title: String) {
 @Composable
 private fun PermissionLinkItem(
     title: String,
-    isGranted: Boolean,
+    status: PermissionStatus,
     onClick: () -> Unit
 ) {
+    val isGranted = status == PermissionStatus.GRANTED
+    val statusText = when (status) {
+        PermissionStatus.GRANTED -> "Granted"
+        PermissionStatus.DENIED -> "Denied - enable in System Settings"
+        PermissionStatus.REQUIRED -> "Required - enable in System Settings"
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -341,7 +348,7 @@ private fun PermissionLinkItem(
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = if (isGranted) "Granted" else "Requires setup in System Settings",
+                text = statusText,
                 style = MaterialTheme.typography.labelMedium,
                 color = if (isGranted) SageGreenDark else AccentCoral
             )

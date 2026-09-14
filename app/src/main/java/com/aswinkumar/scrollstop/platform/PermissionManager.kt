@@ -11,6 +11,8 @@ import com.aswinkumar.scrollstop.domain.model.PermissionState
 
 class PermissionManager(private val context: Context) {
 
+    val permissionHistory = PermissionHistory(context)
+
     fun checkAllPermissions(): PermissionState {
         return PermissionState(
             hasUsageAccess = hasUsageAccessPermission(),
@@ -48,7 +50,8 @@ class PermissionManager(private val context: Context) {
             context.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         ) ?: return false
-        return enabledServices.contains(context.packageName, ignoreCase = true)
+        val expectedService = "${context.packageName}/${ScrollStopAccessibilityService::class.java.name}"
+        return enabledServices.split(':').any { it.equals(expectedService, ignoreCase = true) }
     }
 
     fun createUsageAccessIntent(): Intent {
@@ -69,6 +72,26 @@ class PermissionManager(private val context: Context) {
     fun createAccessibilitySettingsIntent(): Intent {
         return Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+    }
+
+    class PermissionHistory(context: Context) {
+        private val preferences = context.getSharedPreferences(
+            "permission_history",
+            Context.MODE_PRIVATE
+        )
+
+        fun recordIfGranted(key: String, granted: Boolean): Boolean {
+            if (granted) {
+                preferences.edit().putBoolean(key, true).apply()
+            }
+            return preferences.getBoolean(key, false)
+        }
+
+        companion object {
+            const val USAGE_ACCESS = "usage_access"
+            const val OVERLAY = "overlay"
+            const val ACCESSIBILITY = "accessibility"
         }
     }
 }

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ScrollStop</string>
+    <string name="accessibility_service_description">ScrollStop feed detection service</string>
 </resources>
