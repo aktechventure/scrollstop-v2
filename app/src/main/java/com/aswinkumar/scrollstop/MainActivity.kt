@@ -12,6 +12,7 @@ import com.aswinkumar.scrollstop.domain.usecase.GetSettingsUseCase
 import com.aswinkumar.scrollstop.domain.usecase.GetStatisticsUseCase
 import com.aswinkumar.scrollstop.domain.usecase.GetTodayMetricsUseCase
 import com.aswinkumar.scrollstop.platform.PermissionManager
+import com.aswinkumar.scrollstop.platform.PermissionLifecycleObserver
 import com.aswinkumar.scrollstop.presentation.home.HomeViewModel
 import com.aswinkumar.scrollstop.presentation.main.MainScreen
 import com.aswinkumar.scrollstop.presentation.mindful.MindfulViewModel
@@ -42,6 +43,7 @@ class MainActivity : ComponentActivity() {
         val statsViewModel = StatsViewModel(getStatisticsUseCase, usageRepository)
         val mindfulViewModel = MindfulViewModel()
         val settingsViewModel = SettingsViewModel(getSettingsUseCase, checkPermissionsUseCase)
+        lifecycle.addObserver(PermissionLifecycleObserver(onboardingViewModel, settingsViewModel))
 
         setContent {
             ScrollStopTheme {

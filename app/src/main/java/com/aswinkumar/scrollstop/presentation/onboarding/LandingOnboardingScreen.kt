@@ -51,6 +51,7 @@ import com.aswinkumar.scrollstop.core.theme.SageGreenDark
 import com.aswinkumar.scrollstop.core.theme.SageGreenPrimary
 import com.aswinkumar.scrollstop.core.theme.ScrollStopTheme
 import com.aswinkumar.scrollstop.domain.model.PermissionState
+import com.aswinkumar.scrollstop.domain.model.PermissionStatus
 
 @Composable
 fun LandingOnboardingScreen(
@@ -156,24 +157,24 @@ fun LandingOnboardingScreen(
                             icon = Icons.Default.DataUsage,
                             title = "Step 1: Usage Access",
                             description = "ScrollStop detects when short-form video feeds (Reels, Shorts, TikTok) open so it can measure your mindful limits.",
-                            isGranted = uiState.permissionState.hasUsageAccess,
-                            actionText = if (uiState.permissionState.hasUsageAccess) "Usage Access Granted" else "Grant Usage Access",
+                            status = uiState.permissionState.usageAccessStatus,
+                            actionText = permissionActionText("Usage Access", uiState.permissionState.usageAccessStatus),
                             onAction = onRequestUsageAccess
                         )
                         1 -> PermissionStepContent(
                             icon = Icons.Default.Layers,
                             title = "Step 2: Overlay Permission",
                             description = "Allows ScrollStop to show a gentle pause overlay card over endless feeds, giving you a breathing moment.",
-                            isGranted = uiState.permissionState.hasOverlayPermission,
-                            actionText = if (uiState.permissionState.hasOverlayPermission) "Overlay Permission Granted" else "Grant Overlay Permission",
+                            status = uiState.permissionState.overlayPermissionStatus,
+                            actionText = permissionActionText("Overlay Permission", uiState.permissionState.overlayPermissionStatus),
                             onAction = onRequestOverlayPermission
                         )
                         2 -> PermissionStepContent(
                             icon = Icons.Default.AccessibilityNew,
                             title = "Step 3: Accessibility Service",
                             description = "Provides precise feed detection and gentle back-button navigation when you choose to pause a scrolling loop.",
-                            isGranted = uiState.permissionState.hasAccessibilityService,
-                            actionText = if (uiState.permissionState.hasAccessibilityService) "Accessibility Enabled" else "Enable Accessibility Service",
+                            status = uiState.permissionState.accessibilityServiceStatus,
+                            actionText = permissionActionText("Accessibility", uiState.permissionState.accessibilityServiceStatus),
                             onAction = onRequestAccessibilityService
                         )
                     }
@@ -232,10 +233,11 @@ private fun PermissionStepContent(
     icon: ImageVector,
     title: String,
     description: String,
-    isGranted: Boolean,
+    status: PermissionStatus,
     actionText: String,
     onAction: () -> Unit
 ) {
+    val isGranted = status == PermissionStatus.GRANTED
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
@@ -275,6 +277,18 @@ private fun PermissionStepContent(
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        Text(
+            text = when (status) {
+                PermissionStatus.GRANTED -> "Granted"
+                PermissionStatus.DENIED -> "Denied - enable in System Settings"
+                PermissionStatus.REQUIRED -> "Required - enable in System Settings"
+            },
+            style = MaterialTheme.typography.labelMedium,
+            color = if (isGranted) SageGreenDark else MaterialTheme.colorScheme.error
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Button(
             onClick = onAction,
             shape = RoundedCornerShape(16.dp),
@@ -287,6 +301,13 @@ private fun PermissionStepContent(
         }
     }
 }
+
+private fun permissionActionText(name: String, status: PermissionStatus): String =
+    when (status) {
+        PermissionStatus.GRANTED -> "$name Granted"
+        PermissionStatus.DENIED -> "Grant $name Again"
+        PermissionStatus.REQUIRED -> "Grant $name"
+    }
 
 @Composable
 private fun SereneBackdropCanvas(modifier: Modifier = Modifier) {
