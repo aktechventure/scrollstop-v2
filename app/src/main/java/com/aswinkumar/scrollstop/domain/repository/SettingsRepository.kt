@@ -10,4 +10,7 @@ interface SettingsRepository {
     suspend fun toggleDarkMode(enabled: Boolean)
     suspend fun toggleFeed(packageName: String, enabled: Boolean)
     suspend fun clearAllUserData()
+    suspend fun updateQuietHours(start: String, end: String)
+    suspend fun updateInterventionThreshold(minutes: Int)
+    suspend fun togglePrivacyMode(enabled: Boolean)
 }

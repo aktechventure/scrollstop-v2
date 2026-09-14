@@ -11,6 +11,8 @@ data class UserPreferenceEntity(
     val quietHoursEnd: String = "07:00",
     val dailyQuestionLimit: Int = 5,
     val dailyTimeLimitMinutes: Int = 45,
-    val targetedApps: String = "com.google.android.youtube,com.instagram.android,com.zhiliaoapp.musically",
+    val interventionThresholdMinutes: Int = 30,
+    val privacyModeEnabled: Boolean = true,
+    val targetedApps: String = "com.google.android.youtube,com.instagram.android",
     val themePreference: String = "SYSTEM"
 )

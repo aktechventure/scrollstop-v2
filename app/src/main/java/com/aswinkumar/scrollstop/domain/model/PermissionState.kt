@@ -33,12 +33,14 @@ data class PermissionState(
 data class AppSettings(
     val dailyTimeLimitMinutes: Int = 45,
     val notificationsEnabled: Boolean = true,
+    val quietHoursStart: String = "22:00",
+    val quietHoursEnd: String = "07:00",
+    val interventionThresholdMinutes: Int = 30,
+    val privacyModeEnabled: Boolean = true,
     val isDarkMode: Boolean = false,
     val feedsList: List<FeedItemSetting> = listOf(
-        FeedItemSetting("Instagram Reels", "com.instagram.android", true),
-        FeedItemSetting("YouTube Shorts", "com.google.android.youtube", true),
-        FeedItemSetting("TikTok Feed", "com.zhiliaoapp.musically", true),
-        FeedItemSetting("X / Twitter Timeline", "com.twitter.android", false)
+        FeedItemSetting("YouTube", "com.google.android.youtube", true),
+        FeedItemSetting("Instagram", "com.instagram.android", true)
     )
 )
 

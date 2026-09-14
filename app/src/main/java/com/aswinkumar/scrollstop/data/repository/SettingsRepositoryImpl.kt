@@ -40,15 +40,34 @@ class SettingsRepositoryImpl(
         database.userPreferenceDao().insertOrUpdate(current.copy(targetedApps = packages.joinToString(",")))
     }
 
+    suspend fun updateQuietHours(start: String, end: String) {
+        val current = database.userPreferenceDao().getPreferenceSync() ?: UserPreferenceEntity()
+        database.userPreferenceDao().insertOrUpdate(current.copy(quietHoursStart = start, quietHoursEnd = end))
+    }
+
+    suspend fun updateInterventionThreshold(minutes: Int) {
+        val current = database.userPreferenceDao().getPreferenceSync() ?: UserPreferenceEntity()
+        database.userPreferenceDao().insertOrUpdate(current.copy(interventionThresholdMinutes = minutes))
+    }
+
+    suspend fun togglePrivacyMode(enabled: Boolean) {
+        val current = database.userPreferenceDao().getPreferenceSync() ?: UserPreferenceEntity()
+        database.userPreferenceDao().insertOrUpdate(current.copy(privacyModeEnabled = enabled))
+    }
+
     override suspend fun clearAllUserData() {
         database.deleteAllUserData()
     }
 
     private fun UserPreferenceEntity.toSettings(): AppSettings {
-        val enabledPackages = targetedApps.split(",").toSet()
+        val enabledPackages = targetedApps.split(",").filter { it.isNotBlank() }.toSet()
         return AppSettings(
             dailyTimeLimitMinutes = dailyTimeLimitMinutes,
             notificationsEnabled = notificationsEnabled,
+            quietHoursStart = quietHoursStart,
+            quietHoursEnd = quietHoursEnd,
+            interventionThresholdMinutes = interventionThresholdMinutes,
+            privacyModeEnabled = privacyModeEnabled,
             isDarkMode = themePreference == "DARK",
             feedsList = AppSettings().feedsList.map { feed ->
                 feed.copy(isEnabled = feed.packageName in enabledPackages)

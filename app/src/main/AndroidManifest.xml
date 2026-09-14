@@ -2,7 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- V0.1 privacy scope: only overlay + accessibility are required to support
+         intervention UX and local usage monitoring. No contacts, SMS, location,
+         microphone, calendar, photos, or financial permissions are requested. -->
 
     <application
         android:allowBackup="true"
