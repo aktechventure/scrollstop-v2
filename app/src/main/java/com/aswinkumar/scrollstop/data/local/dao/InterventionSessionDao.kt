@@ -13,6 +13,12 @@ interface InterventionSessionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(session: InterventionSessionEntity)
 
+    @Query("SELECT * FROM intervention_sessions WHERE sessionKey = :sessionKey LIMIT 1")
+    suspend fun findBySessionKey(sessionKey: String): InterventionSessionEntity?
+
+    @Query("UPDATE intervention_sessions SET userAction = :userAction, reflectionText = :reflectionText WHERE sessionKey = :sessionKey")
+    suspend fun updateOutcome(sessionKey: String, userAction: String, reflectionText: String? = null)
+
     @Query("SELECT * FROM intervention_sessions ORDER BY startTime DESC LIMIT :limit")
     fun getRecentSessions(limit: Int): Flow<List<InterventionSessionEntity>>
 

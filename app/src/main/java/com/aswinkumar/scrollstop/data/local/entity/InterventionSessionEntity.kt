@@ -11,5 +11,8 @@ data class InterventionSessionEntity(
     val endTime: Long,
     val triggerType: String,
     val interventionType: String,
-    val userAction: String // CONTINUE, LEAVE, DISMISSED
+    val userAction: String = "PENDING", // CONTINUE, LEAVE, DISMISSED, PENDING
+    val sessionKey: String,
+    val thresholdMinutes: Int = 10,
+    val reflectionText: String? = null
 )
