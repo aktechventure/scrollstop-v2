@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -14,6 +15,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aswinkumar.scrollstop.platform.PermissionManager
 import com.aswinkumar.scrollstop.presentation.home.HomeScreen
 import com.aswinkumar.scrollstop.presentation.home.HomeViewModel
@@ -47,6 +51,18 @@ fun MainScreen(
     val statsUiState by statsViewModel.uiState.collectAsState()
     val mindfulUiState by mindfulViewModel.uiState.collectAsState()
     val settingsUiState by settingsViewModel.uiState.collectAsState()
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, onboardingViewModel, settingsViewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                onboardingViewModel.refreshPermissions()
+                settingsViewModel.refreshPermissions()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     val isOnboardingRoute = currentRoute == Screen.Onboarding.route
     val startDestination = remember {

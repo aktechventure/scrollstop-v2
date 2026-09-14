@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aswinkumar.scrollstop.domain.usecase.CheckPermissionsUseCase
 import com.aswinkumar.scrollstop.domain.usecase.GetSettingsUseCase
+import com.aswinkumar.scrollstop.presentation.common.ScreenStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,8 +26,14 @@ class SettingsViewModel(
 
     fun loadSettings() {
         viewModelScope.launch {
-            getSettingsUseCase().collect { settings ->
-                _uiState.update { it.copy(settings = settings) }
+            try {
+                getSettingsUseCase().collect { settings ->
+                    _uiState.update { it.copy(status = ScreenStatus.Success, errorMessage = null, settings = settings) }
+                }
+            } catch (error: Exception) {
+                _uiState.update {
+                    it.copy(status = ScreenStatus.Error, errorMessage = error.message ?: "Unable to load settings")
+                }
             }
         }
     }
