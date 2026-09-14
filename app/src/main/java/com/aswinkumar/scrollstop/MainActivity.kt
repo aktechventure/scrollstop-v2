@@ -17,6 +17,7 @@ import com.aswinkumar.scrollstop.domain.usecase.GetTodayMetricsUseCase
 import com.aswinkumar.scrollstop.domain.usecase.ToggleAppMonitoringUseCase
 import com.aswinkumar.scrollstop.platform.UsageStatsDataSource
 import com.aswinkumar.scrollstop.platform.PermissionManager
+import com.aswinkumar.scrollstop.platform.PermissionLifecycleObserver
 import com.aswinkumar.scrollstop.presentation.home.HomeViewModel
 import com.aswinkumar.scrollstop.presentation.main.MainScreen
 import com.aswinkumar.scrollstop.presentation.mindful.MindfulViewModel

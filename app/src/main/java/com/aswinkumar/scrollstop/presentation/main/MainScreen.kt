@@ -96,15 +96,12 @@ fun MainScreen(
                     uiState = onboardingUiState,
                     onRequestUsageAccess = {
                         context.startActivity(permissionManager.createUsageAccessIntent())
-                        onboardingViewModel.refreshPermissions()
                     },
                     onRequestOverlayPermission = {
                         context.startActivity(permissionManager.createOverlayPermissionIntent())
-                        onboardingViewModel.refreshPermissions()
                     },
                     onRequestAccessibilityService = {
                         context.startActivity(permissionManager.createAccessibilitySettingsIntent())
-                        onboardingViewModel.refreshPermissions()
                     },
                     onCompleteOnboarding = {
                         navController.navigate(Screen.Home.route) {
@@ -145,15 +142,12 @@ fun MainScreen(
                     uiState = settingsUiState,
                     onRequestUsageAccess = {
                         context.startActivity(permissionManager.createUsageAccessIntent())
-                        settingsViewModel.refreshPermissions()
                     },
                     onRequestOverlayPermission = {
                         context.startActivity(permissionManager.createOverlayPermissionIntent())
-                        settingsViewModel.refreshPermissions()
                     },
                     onRequestAccessibilityService = {
                         context.startActivity(permissionManager.createAccessibilitySettingsIntent())
-                        settingsViewModel.refreshPermissions()
                     },
                     onUpdateDailyLimit = { settingsViewModel.updateDailyLimit(it) },
                     onToggleFeed = { pkg, enabled -> settingsViewModel.toggleFeed(pkg, enabled) },
