@@ -18,9 +18,12 @@ class OverlayController(context: Context) {
         if (overlay != null) return
         val view = TextView(appContext).apply {
             text = question
+            contentDescription = question
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.rgb(35, 55, 45))
             setPadding(48, 32, 48, 32)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
         }
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
