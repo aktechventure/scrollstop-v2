@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ScrollStop</string>
+    <string name="accessibility_service_description">Monitors app activity and displays gentle pause overlays when you enter a scroll loop.</string>
 </resources>
