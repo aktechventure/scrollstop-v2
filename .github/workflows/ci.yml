@@ -1,4 +1,4 @@
-name: Android CI & Quality Gates
+name: Android CI
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [ "main", "develop" ]
 
 jobs:
-  build-and-test:
-    name: Build, Lint & Test
+  quality-gates:
+    name: Compile, Lint, Test, Detekt
     runs-on: ubuntu-latest
 
     steps:
@@ -25,14 +25,14 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Compile app
+        run: ./gradlew assembleDebug
+
       - name: Run Detekt
         run: ./gradlew detekt
 
       - name: Run Android Lint
         run: ./gradlew lintDebug
 
-      - name: Run Unit Tests
+      - name: Run unit tests
         run: ./gradlew testDebugUnitTest
-
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug

@@ -9,22 +9,52 @@ plugins {
 
 android {
     namespace = "com.aswinkumar.scrollstop"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.aswinkumar.scrollstop"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val releaseStoreFilePath = System.getenv("SCROLLSTOP_RELEASE_STORE_FILE")
+                ?: project.findProperty("scrollstop.release.storeFile")?.toString()
+            val releaseStorePassword = System.getenv("SCROLLSTOP_RELEASE_STORE_PASSWORD")
+                ?: project.findProperty("scrollstop.release.storePassword")?.toString()
+            val releaseKeyAlias = System.getenv("SCROLLSTOP_RELEASE_KEY_ALIAS")
+                ?: project.findProperty("scrollstop.release.keyAlias")?.toString()
+            val releaseKeyPassword = System.getenv("SCROLLSTOP_RELEASE_KEY_PASSWORD")
+                ?: project.findProperty("scrollstop.release.keyPassword")?.toString()
+
+            if (!releaseStoreFilePath.isNullOrBlank() && !releaseStorePassword.isNullOrBlank() && !releaseKeyAlias.isNullOrBlank() && !releaseKeyPassword.isNullOrBlank()) {
+                storeFile = file(releaseStoreFilePath)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = if (
+                !System.getenv("SCROLLSTOP_RELEASE_STORE_FILE").isNullOrBlank() &&
+                !System.getenv("SCROLLSTOP_RELEASE_STORE_PASSWORD").isNullOrBlank() &&
+                !System.getenv("SCROLLSTOP_RELEASE_KEY_ALIAS").isNullOrBlank() &&
+                !System.getenv("SCROLLSTOP_RELEASE_KEY_PASSWORD").isNullOrBlank()
+            ) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
